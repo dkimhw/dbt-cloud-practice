@@ -10,3 +10,19 @@ models:
             tests:
                 - unique
                 - not_null
+          - name: first_name
+            description: First name of the customer.
+            tests:
+                - not_null
+          - name: last_name
+            description: Last name of the customer.
+            tests:
+                - not_null
+          - name: first_order_date
+            description: The date of the customer's 1st order.
+          - name: most_recent_order_date
+            description: The most recent order date for a customer.
+          - name: number_of_orders
+            description: Total number of orders that a customer made.
+          - name: lifetime_value
+            description: Total $ amount associated with the orders a customer made.
