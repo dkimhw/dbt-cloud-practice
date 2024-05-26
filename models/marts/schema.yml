@@ -2,27 +2,66 @@
 version: 2
 
 models:
-    - name: dim_customers
-      description: "List of unique customers"
-      columns:
-          - name: customer_id
-            description: "Unique customer identifier"
-            tests:
-                - unique
-                - not_null
-          - name: first_name
-            description: First name of the customer.
-            tests:
-                - not_null
-          - name: last_name
-            description: Last name of the customer.
-            tests:
-                - not_null
-          - name: first_order_date
-            description: The date of the customer's 1st order.
-          - name: most_recent_order_date
-            description: The most recent order date for a customer.
-          - name: number_of_orders
-            description: Total number of orders that a customer made.
-          - name: lifetime_value
-            description: Total $ amount associated with the orders a customer made.
+  - name: dim_customers
+    description: List of unique customers
+    columns:
+        - name: customer_id
+          description: Unique customer identifier
+          tests:
+              - unique
+              - not_null
+              - relationships:
+                  to: ref('stg_customers')
+                  field: customer_id
+        - name: first_name
+          description: First name of the customer.
+          tests:
+              - not_null
+        - name: last_name
+          description: Last name of the customer.
+          tests:
+              - not_null
+        - name: first_order_date
+          description: The date of the customer's 1st order.
+        - name: most_recent_order_date
+          description: The most recent order date for a customer.
+        - name: number_of_orders
+          description: Total number of orders that a customer made.
+        - name: lifetime_value
+          description: Total $ amount associated with the orders a customer made.
+  - name: fct_orders
+    description: Order data for jaffle shop.
+    tests:
+        - dbt_utils.expression_is_true:
+            expression: "amount >= 0"
+    columns:
+      - name: order_id
+        description: The primary key for orders.
+        tests:
+          - unique:
+              config:
+                severity: error
+                error_if: ">100"
+                warn_if: ">10"
+      - name: customer_id
+        description: The primary key for customers.
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+      - name: order_date
+        description: The date of the order.
+      - name: amount
+        description: The order amount.
+        tests:
+          - average_dollars_spent_not_less_than_zero:
+              group_by_column: customer_id
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              row_condition: "order_id is not null"
+          - dbt_expectations.expect_column_mean_to_be_between: 
+          # this will perform what our singular and generic tests do!
+              min_value: 1
+              group_by: [customer_id] 
+              row_condition: "order_id is not null" # (Optional)
+              strictly: false      
